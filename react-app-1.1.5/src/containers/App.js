@@ -1,19 +1,62 @@
 import React, { Component } from 'react';
-import './App.css';
-import Person from './Person/Person'
-import Radium, { StyleRoot} from 'radium';
+import classes from './App.css';
+import Persons from '../components/Persons/Persons';
+import Cockpit from '../components/Cockpit/Cockpit';
+import withClass from '../hoc/withClass';
+import Aux from '../hoc/Auxiliary';
+import AuthContext from '../context/auth-context';
+
 //create-react-app my-app --scripts-version 1.1.5
 
 class App extends Component {
+  constructor(props)
+  {
+    super(props);
+    console.log('[App.js] Constructor')
+  }
+
+
+
   state = {
     persons: [
-      {id: '1', name: 'Venky', age:1},
+      {id: '1', name: 'Venky', age:23},
       {id: '2', name: 'Prabu', age:2},
       {id: '3',name: 'Logan', age:3}
     ],
     otherState: 'some other value',
-    showPersons: false
+    showPersons: false,
+    showCockpit: true,
+    //changeCounter: 0, use prev state function inside setState function to access previous state values (not this.state way)
+    isAuthenticated: false
   }
+
+  static getDerivedStateFromProps(props, state){
+    console.log('[App.js] getDerivedStateFromProps',props);
+    return state;
+  }
+
+  componentDidMount(){
+    console.log('[App.js] componentDidMount');
+  }
+
+  shouldComponentUpdate(nextProps, nextState){
+    console.log('[App.js] shouldComponentUpdate');
+    if(nextProps.persons !== this.state.persons)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+  componentDidUpdate(){
+    console.log('[App.js] componentDidUpdate');
+  }
+  // componentWillMount(){
+  //   console.log('[App.js] componentWillMount');
+  // }
+
 
   switchNameHandler = (newName) => {
     //console.log('was clicked!');
@@ -52,73 +95,55 @@ class App extends Component {
 
   togglePersonsHandler = () => {
     this.setState({showPersons: !this.state.showPersons});
-  }
+  };
+
+  loginHandler = () => {
+    this.setState({isAuthenticated: true});
+  };
 
   render() {
-    const style = {
-      backgroundColor: 'green',
-      color: 'white',
-      font: 'inherit',
-      border: '1px solid blue',
-      padding: '8px',
-      cursor: 'pointer',
-      // ':hover': {
-      //   backgroundColor: 'lightgreen',
-      //   color: 'black'
-      // }
-    };
-
+    console.log('[App.js] Render');
     let persons = null;
-
     if(this.state.showPersons){
-      persons = (
-              <div>
-                {this.state.persons.map((person,index) => {
-                    return <Person 
-                              click={() => this.deletePersonHandler(index)}
-                              name={person.name} 
-                              age={person.age}
-                              key={person.id}
-                              changed={(event) => this.nameChangedHandler(event,person.id)}
-                              />
-                })}
-               
+      persons = <div>
+                    <Persons 
+                      persons={this.state.persons}
+                      clicked={this.deletePersonHandler}
+                      changed={this.nameChangedHandler}
+                      isAuthenticated={this.state.isAuthenticated}/> 
+                </div>       
+    }
+
+    let cockpit = null;
+
+    if(this.state.showCockpit){
+      cockpit = <div>
+                      <Cockpit
+                        title={this.props.appTitle}
+                        showPersons={this.state.showPersons} 
+                        personsLength={this.state.persons.length}
+                        clicked={this.togglePersonsHandler}
+                        //login={this.loginHandler}
+                        />
                 </div>
-             );
-      style.backgroundColor = 'red';
-      // style[':hover'] = {
-      //   backgroundColor: 'lightred',
-      //   color: 'black'
-      // }
-
-    }
-
-    let classes = []; 
-
-    if(this.state.persons.length <=2) {
-      classes.push('red');
-    }
-
-    if(this.state.persons.length <=1) {
-      classes.push('bold');
     }
 
     return (
-
-      <div className="App">
-        <h1>H1, I'm a React App</h1>
-        <p className={classes.join(' ')}> check this out</p>
-        <button 
-          style={style}
-          onClick={this.togglePersonsHandler }>Toggle Persons</button>
-          {persons}    
-      </div>
+      // <WithClass classes={classes.App}>
+      <Aux>
+        <button onClick={() => { this.setState({showCockpit: !this.state.showCockpit})}}>Toggle Cockpit</button>
+          <AuthContext.Provider value={{authenticated: this.state.isAuthenticated, login: this.loginHandler}}>
+            {cockpit}
+            {persons}  
+          </AuthContext.Provider> 
+        </Aux> 
+      // </WithClass>
 
     );
   }
 }
 
-export default App;
+export default withClass(App, classes.App);
 
 
 
